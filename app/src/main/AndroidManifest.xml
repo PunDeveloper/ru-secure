@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+
+        <!-- Общий поиск браузеров -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+
+        <!-- Яндекс -->
+        <package android:name="com.yandex.browser" />
+        <package android:name="com.yandex.browser.lite" />
+        <package android:name="com.yandex.browser.beta" />
+
+        <!-- Chrome -->
+        <package android:name="com.android.chrome" />
+        <package android:name="com.chrome.beta" />
+        <package android:name="com.chrome.dev" />
+        <package android:name="com.chrome.canary" />
+
+        <!-- Chrome-подобные / Chromium -->
+        <package android:name="org.chromium.chrome" />
+        <package android:name="com.microsoft.emmx" />
+        <package android:name="com.brave.browser" />
+        <package android:name="com.vivaldi.browser" />
+        <package android:name="com.kiwibrowser.browser" />
+        <package android:name="com.duckduckgo.mobile.android" />
+
+        <!-- Firefox -->
+        <package android:name="org.mozilla.firefox" />
+        <package android:name="org.mozilla.firefox_beta" />
+        <package android:name="org.mozilla.fenix" />
+        <package android:name="org.mozilla.focus" />
+
+        <!-- Opera -->
+        <package android:name="com.opera.browser" />
+        <package android:name="com.opera.browser.beta" />
+        <package android:name="com.opera.mini.native" />
+
+        <!-- Samsung -->
+        <package android:name="com.sec.android.app.sbrowser" />
+
+        <!-- Huawei / Honor -->
+        <package android:name="com.huawei.browser" />
+        <package android:name="com.hihonor.browser" />
+
+        <!-- Xiaomi / MIUI -->
+        <package android:name="com.android.browser" />
+        <package android:name="com.miui.browser" />
+
+        <!-- OPPO / Realme -->
+        <package android:name="com.heytap.browser" />
+        <package android:name="com.oppo.browser" />
+
+        <!-- Vivo -->
+        <package android:name="com.vivo.browser" />
+
+        <!-- Китайские браузеры -->
+        <package android:name="com.tencent.mtt" />
+        <package android:name="com.UCMobile" />
+        <package android:name="com.uc.browser.en" />
+        <package android:name="com.baidu.browser.inter" />
+        <package android:name="com.baidu.browser" />
+
+        <!-- Старые / системные варианты -->
+        <package android:name="com.google.android.browser" />
+
+    </queries>
+
+    <application
+        android:label="RuSecure"
+        android:icon="@mipmap/ic_launcher">
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:label="RuSecure"
+            android:theme="@android:style/Theme.DeviceDefault.Light.DarkActionBar">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+        </activity>
+
+    </application>
+
+</manifest>
