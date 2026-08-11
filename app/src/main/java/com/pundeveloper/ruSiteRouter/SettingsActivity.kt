@@ -1,52 +1,102 @@
 package com.pundeveloper.ruSiteRouter
 
-import android.R
 import android.app.Activity
 import android.os.Bundle
 import android.text.InputType
-import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 
 class SettingsActivity : Activity() {
 
-    private val items = mutableListOf<String>()
-    private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var includeContainer: LinearLayout
+    private lateinit var excludeContainer: LinearLayout
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        SiteStore.ensureDefaultSites(this)
+        actionBar?.title = "RuSecure"
 
-        val density = resources.displayMetrics.density
-        fun dp(value: Int): Int = (value * density).toInt()
+        SiteStore.ensureDefaultSites(this)
+        GeositeUpdater.load(this)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setPadding(dp(16), dp(8), dp(16), dp(16))
         }
 
+        val scroll = ScrollView(this)
+
         @Suppress("DEPRECATION")
-        root.setOnApplyWindowInsetsListener { v, insets ->
-            val topInset = insets.systemWindowInsetTop
-            val bottomInset = insets.systemWindowInsetBottom
-
+        scroll.setOnApplyWindowInsetsListener { v, insets ->
             v.setPadding(
-                dp(16),
-                topInset + dp(16),
-                dp(16),
-                dp(16) + bottomInset
+                0,
+                insets.systemWindowInsetTop,
+                0,
+                insets.systemWindowInsetBottom
             )
-
             insets
+        }
+
+        val useGeosite = CheckBox(this).apply {
+            text = "Использовать список geosite (category-ru)"
+            isChecked = RouterSettings.isUseGeosite(this@SettingsActivity)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+            setOnCheckedChangeListener { _, isChecked ->
+                RouterSettings.setUseGeosite(this@SettingsActivity, isChecked)
+            }
+        }
+
+        val updatedAt = GeositeUpdater.getUpdatedAt(this)
+        val statusText = if (updatedAt == 0L) "не обновлялся" else {
+            java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault())
+                .format(java.util.Date(updatedAt))
+        }
+
+        val geositeStatus = TextView(this).apply {
+            text = "Список обновлён: $statusText"
+            textSize = 13f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+        }
+
+        val updateButton = Button(this).apply {
+            text = "Обновить список сейчас"
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(16) }
+            setOnClickListener {
+                isEnabled = false
+                text = "Обновление..."
+                Thread {
+                    val ok = GeositeUpdater.update(this@SettingsActivity)
+                    runOnUiThread {
+                        text = if (ok) "Обновлён" else "Ошибка обновления"
+                        isEnabled = true
+                        val newTime = GeositeUpdater.getUpdatedAt(this@SettingsActivity)
+                        geositeStatus.text = "Список обновлён: " +
+                                java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault())
+                                    .format(java.util.Date(newTime))
+                    }
+                }.start()
+            }
         }
 
         val useZones = CheckBox(this).apply {
@@ -55,10 +105,7 @@ class SettingsActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(16)
-            }
-
+            ).apply { bottomMargin = dp(16) }
             setOnCheckedChangeListener { _, isChecked ->
                 RouterSettings.setUseZones(this@SettingsActivity, isChecked)
             }
@@ -70,43 +117,31 @@ class SettingsActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(8)
-            }
+            ).apply { bottomMargin = dp(8) }
         }
 
         val russianSpinner = Spinner(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(16)
-            }
+            ).apply { bottomMargin = dp(16) }
         }
 
         val russianOptions = BrowserHelper.getBrowserOptions(this)
         val russianAdapter = ArrayAdapter(
             this,
-            R.layout.simple_spinner_item,
+            android.R.layout.simple_spinner_item,
             russianOptions.map { it.label }
         )
-
-        russianAdapter.setDropDownViewResource(
-            R.layout.simple_spinner_dropdown_item
-        )
-
+        russianAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         russianSpinner.adapter = russianAdapter
         russianSpinner.setSelection(
-            getSelectedPosition(
-                russianOptions,
-                RouterSettings.getRussianBrowser(this)
-            )
+            getSelectedPosition(russianOptions, RouterSettings.getRussianBrowser(this))
         )
-
         russianSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
-                view: View?,
+                view: android.view.View?,
                 position: Int,
                 id: Long
             ) {
@@ -114,9 +149,7 @@ class SettingsActivity : Activity() {
                 RouterSettings.setRussianBrowser(this@SettingsActivity, option.packageName)
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // ничего не делаем
-            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         val otherLabel = TextView(this).apply {
@@ -125,43 +158,31 @@ class SettingsActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(8)
-            }
+            ).apply { bottomMargin = dp(8) }
         }
 
         val otherSpinner = Spinner(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(24)
-            }
+            ).apply { bottomMargin = dp(24) }
         }
 
         val otherOptions = BrowserHelper.getBrowserOptions(this)
         val otherAdapter = ArrayAdapter(
             this,
-            R.layout.simple_spinner_item,
+            android.R.layout.simple_spinner_item,
             otherOptions.map { it.label }
         )
-
-        otherAdapter.setDropDownViewResource(
-            R.layout.simple_spinner_dropdown_item
-        )
-
+        otherAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         otherSpinner.adapter = otherAdapter
         otherSpinner.setSelection(
-            getSelectedPosition(
-                otherOptions,
-                RouterSettings.getOtherBrowser(this)
-            )
+            getSelectedPosition(otherOptions, RouterSettings.getOtherBrowser(this))
         )
-
         otherSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?,
-                view: View?,
+                view: android.view.View?,
                 position: Int,
                 id: Long
             ) {
@@ -169,31 +190,25 @@ class SettingsActivity : Activity() {
                 RouterSettings.setOtherBrowser(this@SettingsActivity, option.packageName)
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // ничего не делаем
-            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        val sitesTitle = TextView(this).apply {
-            text = "Российские сайты"
+        val includeTitle = TextView(this).apply {
+            text = "Российские сайты (открывать в Яндексе)"
             textSize = 16f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(8)
-            }
+            ).apply { bottomMargin = dp(8) }
         }
 
         val hint = TextView(this).apply {
-            text = "Можно вставлять полный URL.\nУдаление — долгим нажатием."
+            text = "Можно вставлять полный URL.\nУдаление — долгим нажатием по строке."
             textSize = 13f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(12)
-            }
+            ).apply { bottomMargin = dp(12) }
         }
 
         val input = EditText(this).apply {
@@ -203,9 +218,15 @@ class SettingsActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(12)
-            }
+            ).apply { bottomMargin = dp(8) }
+        }
+
+        val excludeCheckbox = CheckBox(this).apply {
+            text = "Добавить как исключение (всегда в другом браузере)"
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(12) }
         }
 
         val addButton = Button(this).apply {
@@ -213,63 +234,122 @@ class SettingsActivity : Activity() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                bottomMargin = dp(16)
-            }
+            ).apply { bottomMargin = dp(16) }
         }
 
-        val list = ListView(this).apply {
+        includeContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                0
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val excludeTitle = TextView(this).apply {
+            text = "Исключения (всегда в другом браузере)"
+            textSize = 16f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                weight = 1f
+                topMargin = dp(16)
+                bottomMargin = dp(8)
             }
         }
 
-        items.addAll(SiteStore.getSites(this).sorted())
-
-        adapter = ArrayAdapter(
-            this,
-            R.layout.simple_list_item_1,
-            items
-        )
-
-        list.adapter = adapter
+        excludeContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
 
         addButton.setOnClickListener {
             val raw = input.text.toString()
+            val isExclude = excludeCheckbox.isChecked
 
             if (raw.isBlank()) {
                 Toast.makeText(this, "Введите сайт", Toast.LENGTH_SHORT).show()
             } else {
-                SiteStore.addSite(this, raw)
+                SiteStore.addSite(this, raw, isExclude)
                 input.setText("")
-                refresh()
+                excludeCheckbox.isChecked = false
+                rebuildLists()
             }
         }
 
-        list.setOnItemLongClickListener { _, _, position, _ ->
-            val site = items.getOrNull(position) ?: return@setOnItemLongClickListener false
+        rebuildLists()
 
-            SiteStore.removeSite(this, site)
-            refresh()
-
-            true
-        }
-
+        root.addView(useGeosite)
+        root.addView(geositeStatus)
+        root.addView(updateButton)
         root.addView(useZones)
         root.addView(russianLabel)
         root.addView(russianSpinner)
         root.addView(otherLabel)
         root.addView(otherSpinner)
-        root.addView(sitesTitle)
+        root.addView(includeTitle)
         root.addView(hint)
         root.addView(input)
+        root.addView(excludeCheckbox)
         root.addView(addButton)
-        root.addView(list)
+        root.addView(includeContainer)
+        root.addView(excludeTitle)
+        root.addView(excludeContainer)
 
-        setContentView(root)
+        scroll.addView(root)
+        setContentView(scroll)
+    }
+
+    private fun rebuildLists() {
+        includeContainer.removeAllViews()
+
+        val includeSites = SiteStore.getSites(this).sorted()
+        if (includeSites.isEmpty()) {
+            includeContainer.addView(emptyRow())
+        } else {
+            includeSites.forEach { site ->
+                includeContainer.addView(rowView(site, fromExclude = false))
+            }
+        }
+
+        excludeContainer.removeAllViews()
+
+        val excludeSites = SiteStore.getExclude(this).sorted()
+        if (excludeSites.isEmpty()) {
+            excludeContainer.addView(emptyRow())
+        } else {
+            excludeSites.forEach { site ->
+                excludeContainer.addView(rowView(site, fromExclude = true))
+            }
+        }
+    }
+
+    private fun rowView(site: String, fromExclude: Boolean): TextView {
+        return TextView(this).apply {
+            text = site
+            textSize = 14f
+            setPadding(dp(8), dp(10), dp(8), dp(10))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(4) }
+
+            setOnLongClickListener {
+                SiteStore.removeSite(this@SettingsActivity, site, fromExclude)
+                rebuildLists()
+                true
+            }
+        }
+    }
+
+    private fun emptyRow(): TextView {
+        return TextView(this).apply {
+            text = "— пусто —"
+            textSize = 13f
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+        }
     }
 
     private fun getSelectedPosition(
@@ -278,11 +358,5 @@ class SettingsActivity : Activity() {
     ): Int {
         val index = options.indexOfFirst { it.packageName == storedPackage }
         return if (index >= 0) index else 0
-    }
-
-    private fun refresh() {
-        items.clear()
-        items.addAll(SiteStore.getSites(this).sorted())
-        adapter.notifyDataSetChanged()
     }
 }

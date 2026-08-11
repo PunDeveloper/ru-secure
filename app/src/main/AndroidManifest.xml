@@ -76,6 +76,8 @@
 
     </queries>
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:label="RuSecure"
         android:icon="@mipmap/ic_launcher">
@@ -83,7 +85,6 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="true"
-            android:label="RuSecure"
             android:theme="@android:style/Theme.DeviceDefault.Light.DarkActionBar">
 
             <intent-filter>

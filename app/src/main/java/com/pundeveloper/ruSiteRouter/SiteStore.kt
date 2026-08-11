@@ -1,41 +1,92 @@
 package com.pundeveloper.ruSiteRouter
 
 import android.content.Context
+import android.net.Uri
 import java.net.IDN
 import java.net.URLDecoder
 import java.util.Locale
-import androidx.core.net.toUri
 import androidx.core.content.edit
+import androidx.core.net.toUri
 
 object SiteStore {
-
     private const val PREFS_NAME = "link_router_prefs"
     private const val KEY_SITES = "custom_sites"
+    private const val KEY_EXCLUDE = "custom_exclude"
+    private const val KEY_DEFAULT_SITES_ADDED = "default_sites_added"
+
+    private val defaultSites = listOf(
+        "gosuslugi.ru",
+        "nalog.gov.ru",
+        "mos.ru",
+        "gosuslugi.mosreg.ru",
+        "kremlin.ru",
+        "government.ru"
+    )
 
     fun getSites(context: Context): Set<String> {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getStringSet(KEY_SITES, emptySet()) ?: emptySet()
     }
 
-    fun addSite(context: Context, rawSite: String) {
+    fun getExclude(context: Context): Set<String> {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getStringSet(KEY_EXCLUDE, emptySet()) ?: emptySet()
+    }
+
+    fun addSite(context: Context, rawSite: String, exclude: Boolean) {
         val site = normalize(rawSite)
         if (site.isEmpty()) return
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val set = prefs.getStringSet(KEY_SITES, emptySet())?.toMutableSet() ?: mutableSetOf()
 
-        set.add(site)
+        val targetKey = if (exclude) KEY_EXCLUDE else KEY_SITES
+        val otherKey = if (exclude) KEY_SITES else KEY_EXCLUDE
 
-        prefs.edit { putStringSet(KEY_SITES, set) }
+        val target = prefs.getStringSet(targetKey, emptySet())?.toMutableSet() ?: mutableSetOf()
+        val other = prefs.getStringSet(otherKey, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+        target.add(site)
+        other.remove(site)
+
+        prefs.edit {
+            putStringSet(targetKey, target)
+                .putStringSet(otherKey, other)
+        }
     }
 
-    fun removeSite(context: Context, site: String) {
+    fun removeSite(context: Context, site: String, fromExclude: Boolean) {
+        val key = if (fromExclude) KEY_EXCLUDE else KEY_SITES
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val set = prefs.getStringSet(KEY_SITES, emptySet())?.toMutableSet() ?: mutableSetOf()
+        val set = prefs.getStringSet(key, emptySet())?.toMutableSet() ?: mutableSetOf()
 
         set.remove(site)
 
-        prefs.edit { putStringSet(KEY_SITES, set) }
+        prefs.edit { putStringSet(key, set) }
+    }
+
+    fun ensureDefaultSites(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+        if (prefs.getBoolean(KEY_DEFAULT_SITES_ADDED, false)) {
+            return
+        }
+
+        val current = prefs.getStringSet(KEY_SITES, emptySet())
+            ?.toMutableSet()
+            ?: mutableSetOf()
+
+        defaultSites.forEach { site ->
+            val normalized = normalize(site)
+            if (normalized.isNotEmpty()) {
+                current.add(normalized)
+            }
+        }
+
+        prefs.edit {
+            putBoolean(KEY_DEFAULT_SITES_ADDED, true)
+                .putStringSet(KEY_SITES, current)
+        }
     }
 
     fun normalize(raw: String): String {
@@ -136,41 +187,6 @@ object SiteStore {
             IDN.toASCII(value)
         } catch (_: Exception) {
             value
-        }
-    }
-
-    private const val KEY_DEFAULT_SITES_ADDED = "default_sites_added"
-
-    private val defaultSites = listOf(
-        "gosuslugi.ru",
-        "nalog.gov.ru",
-        "mos.ru",
-        "gosuslugi.mosreg.ru",
-        "kremlin.ru",
-        "government.ru"
-    )
-
-    fun ensureDefaultSites(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-        if (prefs.getBoolean(KEY_DEFAULT_SITES_ADDED, false)) {
-            return
-        }
-
-        val current = prefs.getStringSet(KEY_SITES, emptySet())
-            ?.toMutableSet()
-            ?: mutableSetOf()
-
-        defaultSites.forEach { site ->
-            val normalized = normalize(site)
-            if (normalized.isNotEmpty()) {
-                current.add(normalized)
-            }
-        }
-
-        prefs.edit {
-            putBoolean(KEY_DEFAULT_SITES_ADDED, true)
-                .putStringSet(KEY_SITES, current)
         }
     }
 }

@@ -32,6 +32,11 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
 
         SiteStore.ensureDefaultSites(this)
+        GeositeUpdater.load(this)
+
+        if (RouterSettings.isUseGeosite(this) && GeositeUpdater.isStale(this)) {
+            Thread { GeositeUpdater.update(this) }.start()
+        }
 
         val uri = intent?.data
         if (uri == null) {
@@ -40,9 +45,8 @@ class MainActivity : Activity() {
         }
 
         val host = normalizeHost(uri.host)
-        val customSites = SiteStore.getSites(this)
 
-        val isRussian = isRussian(host, customSites)
+        val isRussian = isRussian(host)
 
         val preferred = getPreferredPackages(isRussian)
         val fallback = getFallbackPackages(isRussian)
@@ -70,15 +74,21 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun isRussian(host: String, customSites: Set<String>): Boolean {
+    private fun isRussian(host: String): Boolean {
         if (host.isEmpty()) return false
 
-        if (matchesCustom(host, customSites)) return true
+        val include = SiteStore.getSites(this)
+        val exclude = SiteStore.getExclude(this)
+
+        if (matchesCustom(host, exclude)) return false
+        if (matchesCustom(host, include)) return true
+
+        if (RouterSettings.isUseGeosite(this) && GeositeRepo.rules.matches(host)) {
+            return true
+        }
 
         if (RouterSettings.isUseZones(this)) {
-            return russianSuffixes.any { suffix ->
-                host.endsWith(suffix)
-            }
+            return russianSuffixes.any { host.endsWith(it) }
         }
 
         return false

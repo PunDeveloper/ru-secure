@@ -13,6 +13,8 @@ object RouterSettings {
     private const val KEY_RUSSIAN_BROWSER = "russian_browser"
     private const val KEY_OTHER_BROWSER = "other_browser"
 
+    private const val KEY_USE_GEOSITE = "use_geosite"
+
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -38,5 +40,14 @@ object RouterSettings {
 
     fun setOtherBrowser(context: Context, value: String) {
         prefs(context).edit { putString(KEY_OTHER_BROWSER, value) }
+    }
+
+
+    fun isUseGeosite(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_USE_GEOSITE, true)
+    }
+
+    fun setUseGeosite(context: Context, value: Boolean) {
+        prefs(context).edit { putBoolean(KEY_USE_GEOSITE, value) }
     }
 }
