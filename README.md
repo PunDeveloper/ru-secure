@@ -78,3 +78,7 @@ RuSecure перехватывает ссылки, которые приложе�
 git clone https://github.com/PunDeveloper/ru-secure.git
 cd ru-secure
 ./gradlew assembleRelease
+
+## Лицензия
+
+[GPL-3.0](LICENSE) — форки и производные работы обязаны оставаться открытыми под той же лицензией.
