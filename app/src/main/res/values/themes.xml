@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Rusiterouter" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Без framework action bar: на targetSdk >= 35 edge-to-edge
+         прячет контент за бар, поэтому шапку и инсеты рисуем сами -->
+    <style name="Theme.Rusiterouter" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
 </resources>

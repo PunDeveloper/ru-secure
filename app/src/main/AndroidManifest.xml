@@ -83,9 +83,9 @@
         android:icon="@mipmap/ic_launcher">
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".SearchActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.DeviceDefault.Light.DarkActionBar">
+            android:theme="@style/Theme.Rusiterouter">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -93,6 +93,11 @@
             </intent-filter>
 
         </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Rusiterouter" />
 
         <activity
             android:name=".MainActivity"

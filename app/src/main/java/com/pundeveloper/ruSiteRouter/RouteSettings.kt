@@ -1,20 +1,8 @@
 /*
  * RuSecure — маршрутизатор ссылок: российские сайты в Яндекс Браузере,
  * остальные — в браузере по выбору.
- * Copyright (C) 2025 PunDeveloper
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Copyright (c) 2025 PunDeveloper
+ * SPDX-License-Identifier: MIT
  */
 package com.pundeveloper.ruSiteRouter
 
@@ -25,6 +13,9 @@ object RouterSettings {
 
     const val AUTO = "auto"
 
+    const val SEARCH_GOOGLE = "google"
+    const val SEARCH_YANDEX = "yandex"
+
     private const val PREFS_NAME = "link_router_prefs"
     private const val KEY_USE_ZONES = "use_zones"
 
@@ -32,6 +23,8 @@ object RouterSettings {
     private const val KEY_OTHER_BROWSER = "other_browser"
 
     private const val KEY_USE_GEOSITE = "use_geosite"
+
+    private const val KEY_SEARCH_ENGINE = "search_engine"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -67,5 +60,13 @@ object RouterSettings {
 
     fun setUseGeosite(context: Context, value: Boolean) {
         prefs(context).edit { putBoolean(KEY_USE_GEOSITE, value) }
+    }
+
+    fun getSearchEngine(context: Context): String {
+        return prefs(context).getString(KEY_SEARCH_ENGINE, SEARCH_GOOGLE) ?: SEARCH_GOOGLE
+    }
+
+    fun setSearchEngine(context: Context, value: String) {
+        prefs(context).edit { putString(KEY_SEARCH_ENGINE, value) }
     }
 }

@@ -1,20 +1,8 @@
 /*
  * RuSecure — маршрутизатор ссылок: российские сайты в Яндекс Браузере,
  * остальные — в браузере по выбору.
- * Copyright (C) 2025 PunDeveloper
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * Copyright (c) 2025 PunDeveloper
+ * SPDX-License-Identifier: MIT
  */
 package com.pundeveloper.ruSiteRouter
 
@@ -44,14 +32,21 @@ class SettingsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        actionBar?.title = "RuSecure"
-
         SiteStore.ensureDefaultSites(this)
         GeositeUpdater.load(this)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(8), dp(16), dp(16))
+        }
+
+        val title = TextView(this).apply {
+            text = "RuSecure"
+            textSize = 20f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
         }
 
         val scroll = ScrollView(this)
@@ -127,6 +122,57 @@ class SettingsActivity : Activity() {
             setOnCheckedChangeListener { _, isChecked ->
                 RouterSettings.setUseZones(this@SettingsActivity, isChecked)
             }
+        }
+
+        val searchEngineLabel = TextView(this).apply {
+            text = "Поисковик на главном экране"
+            textSize = 14f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+        }
+
+        val searchEngineHint = TextView(this).apply {
+            text = "Результаты поиска открываются внутри RuSecure, " +
+                    "ссылки из них маршрутизируются по вашим правилам."
+            textSize = 13f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+        }
+
+        val searchEngineSpinner = Spinner(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(16) }
+        }
+
+        val engineOptions = SearchEngines.all
+        val engineAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            engineOptions.map { it.label }
+        )
+        engineAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        searchEngineSpinner.adapter = engineAdapter
+        searchEngineSpinner.setSelection(
+            getEnginePosition(engineOptions, RouterSettings.getSearchEngine(this))
+        )
+        searchEngineSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: android.view.View?,
+                position: Int,
+                id: Long
+            ) {
+                val option = engineOptions.getOrNull(position) ?: return
+                RouterSettings.setSearchEngine(this@SettingsActivity, option.id)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         val russianLabel = TextView(this).apply {
@@ -299,10 +345,14 @@ class SettingsActivity : Activity() {
 
         rebuildLists()
 
+        root.addView(title)
         root.addView(useGeosite)
         root.addView(geositeStatus)
         root.addView(updateButton)
         root.addView(useZones)
+        root.addView(searchEngineLabel)
+        root.addView(searchEngineHint)
+        root.addView(searchEngineSpinner)
         root.addView(russianLabel)
         root.addView(russianSpinner)
         root.addView(otherLabel)
@@ -375,6 +425,14 @@ class SettingsActivity : Activity() {
         storedPackage: String
     ): Int {
         val index = options.indexOfFirst { it.packageName == storedPackage }
+        return if (index >= 0) index else 0
+    }
+
+    private fun getEnginePosition(
+        options: List<SearchEngine>,
+        storedId: String
+    ): Int {
+        val index = options.indexOfFirst { it.id == storedId }
         return if (index >= 0) index else 0
     }
 }
