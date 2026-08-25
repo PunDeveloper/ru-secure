@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import android.app.Activity
 import android.app.AlertDialog
@@ -41,8 +41,16 @@ class SearchActivity : Activity() {
         SiteStore.ensureDefaultSites(this)
         GeositeUpdater.load(this)
 
-        if (RouterSettings.isUseGeosite(this) && GeositeUpdater.isStale(this)) {
-            Thread { GeositeUpdater.update(this) }.start()
+        // Проверяем и обновляем Минцифру (основной режим)
+        if (GeositeUpdater.isStale(this, "mincifra_updated")) {
+            Thread { GeositeUpdater.updateMinCifra(this) }.start()
+        }
+
+        // Проверяем и обновляем v2fly (опциональный режим)
+        if (RouterSettings.isUseGeosite(this) &&
+            RouterSettings.isUseV2fly(this) &&
+            GeositeUpdater.isStale(this, "v2fly_updated")) {
+            Thread { GeositeUpdater.updateV2fly(this) }.start()
         }
 
         val root = LinearLayout(this).apply {

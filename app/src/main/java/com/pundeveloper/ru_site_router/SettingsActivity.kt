@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import android.app.Activity
 import android.os.Bundle
@@ -24,6 +24,10 @@ class SettingsActivity : Activity() {
 
     private lateinit var includeContainer: LinearLayout
     private lateinit var excludeContainer: LinearLayout
+    private lateinit var mincifraStatusView: TextView
+    private lateinit var v2flyStatusView: TextView
+    private lateinit var updateButton: Button
+    private lateinit var useV2flyCheckbox: CheckBox
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
@@ -62,8 +66,10 @@ class SettingsActivity : Activity() {
             insets
         }
 
+        // === Секция: Базы сайтов ===
+
         val useGeosite = CheckBox(this).apply {
-            text = "Использовать список geosite (category-ru)"
+            text = "Использовать базы сайтов"
             isChecked = RouterSettings.isUseGeosite(this@SettingsActivity)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -71,17 +77,32 @@ class SettingsActivity : Activity() {
             ).apply { bottomMargin = dp(8) }
             setOnCheckedChangeListener { _, isChecked ->
                 RouterSettings.setUseGeosite(this@SettingsActivity, isChecked)
+                useV2flyCheckbox.isEnabled = isChecked
             }
         }
 
-        val updatedAt = GeositeUpdater.getUpdatedAt(this)
-        val statusText = if (updatedAt == 0L) "не обновлялся" else {
-            java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault())
-                .format(java.util.Date(updatedAt))
+        useV2flyCheckbox = CheckBox(this).apply {
+            text = "Все российские сайты (список v2fly, расширенный режим)"
+            isChecked = RouterSettings.isUseV2fly(this@SettingsActivity)
+            isEnabled = RouterSettings.isUseGeosite(this@SettingsActivity)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(8) }
+            setOnCheckedChangeListener { _, isChecked ->
+                RouterSettings.setUseV2fly(this@SettingsActivity, isChecked)
+            }
         }
 
-        val geositeStatus = TextView(this).apply {
-            text = "Список обновлён: $statusText"
+        mincifraStatusView = TextView(this).apply {
+            textSize = 13f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(2) }
+        }
+
+        v2flyStatusView = TextView(this).apply {
             textSize = 13f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -89,27 +110,13 @@ class SettingsActivity : Activity() {
             ).apply { bottomMargin = dp(8) }
         }
 
-        val updateButton = Button(this).apply {
-            text = "Обновить список сейчас"
+        updateButton = Button(this).apply {
+            text = "Обновить списки сейчас"
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(16) }
-            setOnClickListener {
-                isEnabled = false
-                text = "Обновление..."
-                Thread {
-                    val ok = GeositeUpdater.update(this@SettingsActivity)
-                    runOnUiThread {
-                        text = if (ok) "Обновлён" else "Ошибка обновления"
-                        isEnabled = true
-                        val newTime = GeositeUpdater.getUpdatedAt(this@SettingsActivity)
-                        geositeStatus.text = "Список обновлён: " +
-                                java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.getDefault())
-                                    .format(java.util.Date(newTime))
-                    }
-                }.start()
-            }
+            setOnClickListener { updateListsNow() }
         }
 
         val useZones = CheckBox(this).apply {
@@ -123,6 +130,8 @@ class SettingsActivity : Activity() {
                 RouterSettings.setUseZones(this@SettingsActivity, isChecked)
             }
         }
+
+        // === Секция: Поисковик ===
 
         val searchEngineLabel = TextView(this).apply {
             text = "Поисковик на главном экране"
@@ -174,6 +183,8 @@ class SettingsActivity : Activity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+
+        // === Секция: Браузеры ===
 
         val russianLabel = TextView(this).apply {
             text = "Браузер для российских сайтов"
@@ -256,6 +267,8 @@ class SettingsActivity : Activity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+
+        // === Секция: Пользовательские правила ===
 
         val includeTitle = TextView(this).apply {
             text = "Российские сайты (открывать в Яндексе)"
@@ -345,9 +358,13 @@ class SettingsActivity : Activity() {
 
         rebuildLists()
 
+        // === Собираем layout ===
+
         root.addView(title)
         root.addView(useGeosite)
-        root.addView(geositeStatus)
+        root.addView(useV2flyCheckbox)
+        root.addView(mincifraStatusView)
+        root.addView(v2flyStatusView)
         root.addView(updateButton)
         root.addView(useZones)
         root.addView(searchEngineLabel)
@@ -368,6 +385,61 @@ class SettingsActivity : Activity() {
 
         scroll.addView(root)
         setContentView(scroll)
+
+        refreshUpdateStatus()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshUpdateStatus()
+    }
+
+    private fun refreshUpdateStatus() {
+        val mincifraTime = GeositeUpdater.getUpdatedAt(this, GeositeUpdater.KEY_MINCIFRA_UPDATED)
+        val v2flyTime = GeositeUpdater.getUpdatedAt(this, GeositeUpdater.KEY_V2FLY_UPDATED)
+
+        mincifraStatusView.text = "Список Минцифры: ${formatUpdatedAt(mincifraTime)}"
+        v2flyStatusView.text = "Список v2fly: ${formatUpdatedAt(v2flyTime)}"
+    }
+
+    private fun formatUpdatedAt(timestamp: Long): String {
+        if (timestamp == 0L) return "ещё не обновлялся"
+        return java.text.SimpleDateFormat(
+            "dd.MM.yyyy HH:mm",
+            java.util.Locale.getDefault()
+        ).format(java.util.Date(timestamp))
+    }
+
+    private fun updateListsNow() {
+        updateButton.isEnabled = false
+        updateButton.text = "Обновление..."
+
+        Thread {
+            val mincifraOk = GeositeUpdater.updateMinCifra(this)
+
+            val v2flyOk = if (RouterSettings.isUseV2fly(this)) {
+                GeositeUpdater.updateV2fly(this)
+            } else {
+                true // не обновляем, если выключено
+            }
+
+            runOnUiThread {
+                updateButton.isEnabled = true
+                updateButton.text = "Обновить списки сейчас"
+
+                val message = buildString {
+                    append("Минцифра: ")
+                    append(if (mincifraOk) "✓" else "✗")
+                    if (RouterSettings.isUseV2fly(this@SettingsActivity)) {
+                        append(", v2fly: ")
+                        append(if (v2flyOk) "✓" else "✗")
+                    }
+                }
+                Toast.makeText(this@SettingsActivity, message, Toast.LENGTH_SHORT).show()
+
+                refreshUpdateStatus()
+            }
+        }.start()
     }
 
     private fun rebuildLists() {

@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import android.content.Context
 import android.content.Intent

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ru-site-router"
+rootProject.name = "ru_site_router"
 include(":app")
  

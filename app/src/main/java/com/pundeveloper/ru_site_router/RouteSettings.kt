@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import android.content.Context
 import androidx.core.content.edit
@@ -25,6 +25,20 @@ object RouterSettings {
     private const val KEY_USE_GEOSITE = "use_geosite"
 
     private const val KEY_SEARCH_ENGINE = "search_engine"
+
+    private const val KEY_USE_V2FLY = "use_v2fly_mode"
+
+    fun isUseV2fly(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_USE_V2FLY, false) // По умолчанию false — только Минцифра
+    }
+
+    fun setUseV2fly(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit {
+                putBoolean(KEY_USE_V2FLY, enabled)
+            }
+    }
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import androidx.test.platform.app.InstrumentationRegistry
 

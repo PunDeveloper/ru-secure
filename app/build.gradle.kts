@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pundeveloper.ruSiteRouter"
+    namespace = "com.pundeveloper.ru_site_router"
     compileSdk {
         version = release(37) {
             minorApiLevel = 1
@@ -46,6 +46,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.bcprov.jdk18on)
+    implementation(libs.okhttp)
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

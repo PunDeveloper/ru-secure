@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter
+package com.pundeveloper.ru_site_router
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -14,7 +14,6 @@ import java.net.IDN
 import java.util.Locale
 
 object Router {
-
     val yandexPackages = listOf(
         "com.yandex.browser",
         "com.yandex.browser.lite",
@@ -39,9 +38,7 @@ object Router {
      */
     fun open(context: Context, uri: Uri): Boolean {
         val host = normalizeHost(uri.host)
-
         val isRussian = isRussian(context, host)
-
         val preferred = getPreferredPackages(context, isRussian)
         val fallback = getFallbackPackages(context, isRussian)
 
@@ -51,13 +48,10 @@ object Router {
 
     fun normalizeHost(rawHost: String?): String {
         var host = rawHost?.trim()?.lowercase(Locale.ROOT) ?: return ""
-
         if (host.startsWith("www.")) {
             host = host.removePrefix("www.")
         }
-
         if (host.isEmpty()) return ""
-
         return try {
             IDN.toASCII(host)
         } catch (_: Exception) {
@@ -71,13 +65,26 @@ object Router {
         val include = SiteStore.getSites(context)
         val exclude = SiteStore.getExclude(context)
 
+        // 1. Сначала проверяем пользовательские исключения (высший приоритет)
         if (matchesCustom(host, exclude)) return false
+
+        // 2. Затем проверяем пользовательские включения
         if (matchesCustom(host, include)) return true
 
-        if (RouterSettings.isUseGeosite(context) && GeositeRepo.rules.matches(host)) {
-            return true
+        // 3. Проверяем базы сайтов, если эта функция включена в настройках
+        if (RouterSettings.isUseGeosite(context)) {
+            // 3.1. Режим по умолчанию: ВСЕГДА проверяем сайты с сертификатом Минцифры
+            if (GeositeRepo.mincifraRules.matches(host)) {
+                return true
+            }
+
+            // 3.2. Расширенный режим: проверяем v2fly, только если пользователь его включил
+            if (RouterSettings.isUseV2fly(context) && GeositeRepo.v2flyRules.matches(host)) {
+                return true
+            }
         }
 
+        // 4. Проверяем зоны (.ru, .рф), если включено
         if (RouterSettings.isUseZones(context)) {
             return russianSuffixes.any { host.endsWith(it) }
         }
@@ -93,7 +100,6 @@ object Router {
 
     fun matchesRule(host: String, rule: String): Boolean {
         if (host.isEmpty() || rule.isEmpty()) return false
-
         return if (rule.startsWith(".")) {
             host.endsWith(rule) || host == rule.removePrefix(".")
         } else {
@@ -115,7 +121,6 @@ object Router {
                 chromePackages + yandexPackages
             }
         }
-
         return listOf(selected)
     }
 
@@ -125,13 +130,11 @@ object Router {
         } else {
             RouterSettings.getOtherBrowser(context)
         }
-
         val auto = if (isRussian) {
             yandexPackages + chromePackages
         } else {
             chromePackages + yandexPackages
         }
-
         return auto.filter { it != selected && it != context.packageName }
     }
 
@@ -151,7 +154,6 @@ object Router {
                 // другая ошибка запуска
             }
         }
-
         return false
     }
 }

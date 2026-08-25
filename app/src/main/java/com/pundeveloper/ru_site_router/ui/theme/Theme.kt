@@ -4,7 +4,7 @@
  * Copyright (c) 2025 PunDeveloper
  * SPDX-License-Identifier: MIT
  */
-package com.pundeveloper.ruSiteRouter.ui.theme
+package com.pundeveloper.ru_site_router.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
