@@ -14,7 +14,6 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        SiteStore.ensureDefaultSites(this)
         GeositeUpdater.load(this)
 
         val mincifraStale = GeositeUpdater.isStale(this, GeositeUpdater.KEY_MINCIFRA_UPDATED)

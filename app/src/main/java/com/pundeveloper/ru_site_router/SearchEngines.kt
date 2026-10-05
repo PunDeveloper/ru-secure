@@ -8,6 +8,7 @@ package com.pundeveloper.ru_site_router
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.DrawableRes
 
 data class SearchEngine(
     val id: String,
@@ -15,7 +16,8 @@ data class SearchEngine(
     // Домашняя страница, которая открывается на главном экране
     val homeUrl: String,
     // Домены, которые остаются внутри WebView (служебные страницы поисковика)
-    val internalSuffixes: List<String>
+    val internalSuffixes: List<String>,
+    @DrawableRes val iconResId: Int
 )
 
 object SearchEngines {
@@ -29,7 +31,8 @@ object SearchEngines {
                 "google.com",
                 "google.ru",
                 "googleusercontent.com"
-            )
+            ),
+            iconResId = R.drawable.ic_google
         ),
         SearchEngine(
             id = RouterSettings.SEARCH_YANDEX,
@@ -41,7 +44,17 @@ object SearchEngines {
                 "yandex.com",
                 "ya.ru",
                 "yandex.net"
-            )
+            ),
+            iconResId = R.drawable.ic_yandex
+        ),
+        SearchEngine(
+            id = "duckduckgo",
+            label = "DuckDuckGo",
+            homeUrl = "https://duckduckgo.com/",
+            internalSuffixes = listOf(
+                "duckduckgo.com"
+            ),
+            iconResId = R.drawable.ic_duckduckgo
         )
     )
 

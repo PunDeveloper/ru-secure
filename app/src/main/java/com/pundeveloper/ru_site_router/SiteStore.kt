@@ -19,14 +19,6 @@ object SiteStore {
     private const val KEY_EXCLUDE = "custom_exclude"
     private const val KEY_DEFAULT_SITES_ADDED = "default_sites_added"
 
-    private val defaultSites = listOf(
-        "gosuslugi.ru",
-        "nalog.gov.ru",
-        "mos.ru",
-        "gosuslugi.mosreg.ru",
-        "kremlin.ru",
-        "government.ru"
-    )
 
     fun getSites(context: Context): Set<String> {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -68,30 +60,6 @@ object SiteStore {
         set.remove(site)
 
         prefs.edit { putStringSet(key, set) }
-    }
-
-    fun ensureDefaultSites(context: Context) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-        if (prefs.getBoolean(KEY_DEFAULT_SITES_ADDED, false)) {
-            return
-        }
-
-        val current = prefs.getStringSet(KEY_SITES, emptySet())
-            ?.toMutableSet()
-            ?: mutableSetOf()
-
-        defaultSites.forEach { site ->
-            val normalized = normalize(site)
-            if (normalized.isNotEmpty()) {
-                current.add(normalized)
-            }
-        }
-
-        prefs.edit {
-            putBoolean(KEY_DEFAULT_SITES_ADDED, true)
-                .putStringSet(KEY_SITES, current)
-        }
     }
 
     fun normalize(raw: String): String {

@@ -44,7 +44,7 @@ object RouterSettings {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isUseZones(context: Context): Boolean {
-        return prefs(context).getBoolean(KEY_USE_ZONES, true)
+        return prefs(context).getBoolean(KEY_USE_ZONES, false)
     }
 
     fun setUseZones(context: Context, value: Boolean) {

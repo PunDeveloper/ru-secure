@@ -38,7 +38,6 @@ class SearchActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        SiteStore.ensureDefaultSites(this)
         GeositeUpdater.load(this)
 
         // Проверяем и обновляем Минцифру (основной режим)
